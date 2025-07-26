@@ -72,7 +72,7 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 				continue
 			}
 			email := &model.EmailMessage{
-				From:    "",
+				From:    "", 
 				To:      sess.RcptTo,
 				Subject: subj,
 				Headers: headers,
@@ -80,7 +80,6 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 			}
 			emailChan <- email
 			sess.writeResponse(250, "OK: Queued")
-
 			sess.MailFrom = ""
 			sess.RcptTo = nil
 		case "QUIT":
@@ -126,6 +125,8 @@ func readData(r *bufio.Reader) (body string, headers map[string]string, subject 
 	headers = make(map[string]string)
 	var lines []string
 	readingHeaders := true
+	subjectFound := false
+	
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
@@ -139,6 +140,7 @@ func readData(r *bufio.Reader) (body string, headers map[string]string, subject 
 			readingHeaders = false
 			continue
 		}
+
 		if readingHeaders {
 			if idx := strings.Index(line, ":"); idx != -1 {
 				key := strings.TrimSpace(line[:idx])
@@ -146,12 +148,22 @@ func readData(r *bufio.Reader) (body string, headers map[string]string, subject 
 				headers[key] = val
 				if strings.ToLower(key) == "subject" {
 					subject = val
+					subjectFound = true
 				}
+			} else {
+
+				readingHeaders = false
+				lines = append(lines, line)
 			}
 			continue
 		}
 		lines = append(lines, line)
 	}
+
+	if !subjectFound || subject == "" {
+		subject = "(Sin asunto)"
+	}
+
 	body = strings.Join(lines, "\n")
 	return
 }
