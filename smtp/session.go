@@ -2,10 +2,10 @@ package smtp
 
 import (
 	"bufio"
+	"codigo_reto/model"
 	"fmt"
 	"net"
 	"strings"
-	"codigo_reto/model"
 )
 
 // SMTPSession representa el estado de una sesión SMTP por conexión.
@@ -23,11 +23,11 @@ type SMTPSession struct {
 // handleConnection maneja el ciclo de vida de una sesión SMTP.
 func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 	defer conn.Close()
-	
+
 	sess := &SMTPSession{
-		Conn:   conn,
-		Reader: bufio.NewReader(conn),
-		Writer: bufio.NewWriter(conn),
+		Conn:    conn,
+		Reader:  bufio.NewReader(conn),
+		Writer:  bufio.NewWriter(conn),
 		Headers: make(map[string]string),
 	}
 	sess.writeResponse(220, "Simple Go SMTP Service Ready")
@@ -48,23 +48,11 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 			sess.Helo = true
 			sess.writeResponse(250, "Hello")
 		case "MAIL":
-			if !sess.Helo {
-				sess.writeResponse(503, "Bad sequence of commands: HELO/EHLO required")
-				continue
-			}
-			from := parseMailFrom(arg)
-			if from == "" {
-				sess.writeResponse(501, "Syntax error in parameters or arguments")
-				continue
-			}
-			sess.MailFrom = from
-			sess.RcptTo = nil // Reset recipients for new mail
-			sess.writeResponse(250, "OK")
+			// Ignorar MAIL FROM, no es necesario
+			sess.MailFrom = "" // No se usará
+			sess.RcptTo = nil  // Reset recipients for new mail
+			sess.writeResponse(250, "OK (MAIL FROM ignorado)")
 		case "RCPT":
-			if sess.MailFrom == "" {
-				sess.writeResponse(503, "Bad sequence of commands: MAIL FROM required")
-				continue
-			}
 			to := parseRcptTo(arg)
 			if to == "" {
 				sess.writeResponse(501, "Syntax error in parameters or arguments")
@@ -84,7 +72,7 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 				continue
 			}
 			email := &model.EmailMessage{
-				From:    sess.MailFrom,
+				From:    "", // No se usará
 				To:      sess.RcptTo,
 				Subject: subj,
 				Headers: headers,

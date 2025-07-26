@@ -1,12 +1,12 @@
 package smtp
 
 import (
+	"codigo_reto/model"
 	"fmt"
 	"net"
-	"codigo_reto/model"
 )
 
-// StartSMTPServer inicia el servidor SMTP en el puerto dado y pasa los emails recibidos al canal.
+// inicia el servidor SMTP en el puerto dado 
 func StartSMTPServer(address string, emailChan chan<- *model.EmailMessage) error {
 	ln, err := net.Listen("tcp", address)
 	if err != nil {
@@ -22,5 +22,3 @@ func StartSMTPServer(address string, emailChan chan<- *model.EmailMessage) error
 		go HandleConnection(conn, emailChan)
 	}
 }
-
-
