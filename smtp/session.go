@@ -20,7 +20,7 @@ type SMTPSession struct {
 	Data     bool
 }
 
-// handleConnection maneja el ciclo de vida de una sesión SMTP.
+// ciclo de vida de una sesión SMTP.
 func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 	defer conn.Close()
 
@@ -48,9 +48,9 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 			sess.Helo = true
 			sess.writeResponse(250, "Hello")
 		case "MAIL":
-			// Ignorar MAIL FROM, no es necesario
-			sess.MailFrom = "" // No se usará
-			sess.RcptTo = nil  // Reset recipients for new mail
+
+			sess.MailFrom = ""
+			sess.RcptTo = nil
 			sess.writeResponse(250, "OK (MAIL FROM ignorado)")
 		case "RCPT":
 			to := parseRcptTo(arg)
@@ -72,7 +72,7 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 				continue
 			}
 			email := &model.EmailMessage{
-				From:    "", // No se usará
+				From:    "",
 				To:      sess.RcptTo,
 				Subject: subj,
 				Headers: headers,
@@ -80,7 +80,7 @@ func HandleConnection(conn net.Conn, emailChan chan<- *model.EmailMessage) {
 			}
 			emailChan <- email
 			sess.writeResponse(250, "OK: Queued")
-			// Reset for next message
+
 			sess.MailFrom = ""
 			sess.RcptTo = nil
 		case "QUIT":
@@ -122,7 +122,6 @@ func parseRcptTo(arg string) string {
 	return ""
 }
 
-// readData lee el contenido del correo hasta una línea con solo un punto.
 func readData(r *bufio.Reader) (body string, headers map[string]string, subject string, err error) {
 	headers = make(map[string]string)
 	var lines []string

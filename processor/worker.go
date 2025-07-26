@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// WorkerPool inicia un grupo de workers para procesar emails concurrentemente.
+
 func WorkerPool(numWorkers int, emailChan <-chan *model.EmailMessage, done chan<- struct{}) {
 	for i := 0; i < numWorkers; i++ {
 		go worker(i, emailChan, done)
@@ -17,7 +17,7 @@ func WorkerPool(numWorkers int, emailChan <-chan *model.EmailMessage, done chan<
 }
 
 func worker(id int, emailChan <-chan *model.EmailMessage, done chan<- struct{}) {
-	// Configuración SMTP para Gmail
+	
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
 	smtpUser := "edwardmor3h@gmail.com" 
@@ -25,16 +25,13 @@ func worker(id int, emailChan <-chan *model.EmailMessage, done chan<- struct{}) 
 
 	for email := range emailChan {
 		fmt.Printf("[Worker %d] Procesando email a %v\n", id, email.To)
-		// Simula procesamiento variable
+		
 		delay := rand.Intn(1000) + 500 // 500ms a 1500ms
 		time.Sleep(time.Duration(delay) * time.Millisecond)
-
-		// Imprimir el contenido parseado del email
 		fmt.Printf("[Worker %d] --- EMAIL RECIBIDO ---\n", id)
 		fmt.Printf("Para: %v\nAsunto: %s\nHeaders: %v\nCuerpo:\n%s\n", email.To, email.Subject, email.Headers, email.Body)
 		fmt.Printf("[Worker %d] --- FIN EMAIL ---\n", id)
 
-		// Enviar el email usando SMTP externo (evitar Subject duplicado y permitir acentos)
 		toHeader := strings.Join(email.To, ",")
 		msg := "From: " + smtpUser + "\r\n" +
 			"To: " + toHeader + "\r\n" +
